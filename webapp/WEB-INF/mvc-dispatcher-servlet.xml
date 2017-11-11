@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- Specifying base package of the Components like Controller, Service, DAO -->
+    <context:component-scan base-package="com.ibbl"/>
+
+    <mvc:annotation-driven/>
+    <!-- Specifying the Resource location to load JS, CSS, Images etc -->
+    <!--<mvc:resources mapping="/resources/**" location="/resources/"/>-->
+    <!--<mvc:resources mapping="/resources/**" location="file:///f://image2/resources/"/>-->
+    <!--<mvc:resources mapping="/resources/**" location="file:e://resources/qrf/resources/" />-->
+
+    <mvc:resources mapping="/resources/**" location="/resources/"/>
+    <!--<mvc:resources location="/js/" mapping="js/**"/>-->
+    <mvc:resources mapping="/doc/**" location="file:d://cloud/doc/"/>
+
+    <!-- View Resolver -->
+    <!-- Freemarker configuration -->
+    <bean id="freemarkerConfig" class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+        <property name="templateLoaderPath" value="/"/>
+        <property name="freemarkerSettings">
+            <props>
+                <prop key="template_exception_handler">rethrow</prop>
+                <prop key="number_format">0.########</prop>
+                <prop key="date_format">dd/MM/yyyy</prop>
+                <prop key="datetime_format">dd/MM/yyyy hh:mm a</prop>
+                <!--<prop key="datetime_format">dd/MM/yyyy</prop>-->
+            </props>
+        </property>
+    </bean>
+
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+        <!--<property name="viewClass" value="com.example.LoggingFreeMarkerView" />-->
+        <!--<property name="cache" value="false" /> &lt;!&ndash; cache disabled for performance monitoring &ndash;&gt;-->
+        <property name="suffix" value=".ftl"/>
+        <!-- if you want to use the Spring FreeMarker macros, set this property to true -->
+        <property name="exposeSpringMacroHelpers" value="true"/>
+        <property name="exposeRequestAttributes" value="true"/>
+        <property name="exposeSessionAttributes" value="true"/>
+        <property name="requestContextAttribute" value="rc"/>
+    </bean>
+
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- setting maximum upload size -->
+        <!--<property name="maxUploadSize" value="100000" />-->
+    </bean>
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="/WEB-INF/database.properties"/>
+    </bean>
+    <!-- DataSource -->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+    <!-- Hibernate SessionFactory -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <!--<prop key="hibernate.show_sql">true</prop>-->
+            </props>
+        </property>
+        <property name="packagesToScan"
+                  value="com.ibbl.incident.model"/>
+        <!--, net.softengine.shop.model, net.softengine.account.model, net.softengine.admin.model-->
+    </bean>
+
+    <!-- Transaction -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <bean id="jpaTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="authenticationAspect" class="com.ibbl.aop.AuthenticationAspect"/>
+    <bean id="authorizationAspect" class="com.ibbl.aop.AuthorizationAspect"/>
+
+
+    <!--Enable the @AspectJ support-->
+     <aop:aspectj-autoproxy proxy-target-class="true">
+         <!--<aop:include name="authenticationAspect"/>-->
+         <!--<aop:include name="authorizationAspect"/>-->
+     </aop:aspectj-autoproxy>
+</beans>
